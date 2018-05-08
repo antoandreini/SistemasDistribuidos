@@ -48,7 +48,7 @@ int threads[4];
    }
 
 N= atoi(argv[1]);
-numthread= atoi(argv[4]);
+numthread= atoi(argv[2]);
 
 //Aloca memoria para las matrices
  A=(double*)malloc(sizeof(double)*N*N);
@@ -83,6 +83,8 @@ numthread= atoi(argv[4]);
  }
  pthread_join(T[0],NULL);
  pthread_join(T[1],NULL);
+ pthread_join(T[2],NULL);
+ pthread_join(T[3],NULL);
 
 printf("Tiempo en segundos con 4 pthreads %f\n", dwalltime() - timetick);
 

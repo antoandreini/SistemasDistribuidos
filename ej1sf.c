@@ -5,7 +5,7 @@
 
 //Preguntas
 // al inicializar A es necesario poner una ordenada por columna y otra por filas?
-//Como hago la matriz traspuesta
+//Como hago la matriz transpuesta
 
 //Variable para tiempo
 double dwalltime();
