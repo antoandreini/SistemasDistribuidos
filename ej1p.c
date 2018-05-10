@@ -35,6 +35,7 @@ void* multiplicacion(void *id){
 	  }
 	}   
   pthread_barrier_wait(&barrera);
+
   for(int i=posInicial;i<posFinal;i++){
  	  for(int j=0;j<N;j++){
         R[i*N+j]=0;
@@ -82,15 +83,19 @@ timetick = dwalltime();
 
 //crea threads
 elementosThread = N/numthread;
+
 for (int id=0;id<numthread; id++){  
   threads[id]=id;
   pthread_create(&T[id],NULL,&multiplicacion,(void*)&threads[id]);
 }
+
 for (int id=0;id<numthread; id++){ 
   pthread_join(T[id],NULL);
  }
 
 printf("Tiempo en segundos %f\n", dwalltime() - timetick);
+
+pthread_barrier_destroy(&barrera);
 
 //Verifica el resultado
 for(i=0;i<N;i++){
