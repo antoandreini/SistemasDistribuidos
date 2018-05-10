@@ -3,12 +3,11 @@
 #include <sys/time.h>
 #include <pthread.h>
 
-int i,j,k;
 int elementosThread;
 unsigned long Total,N;
 double *A, *At, *B, *C, *D, *E, *F, *L, *U, *AA, *AAC, *LB, *LBE, *DU, *DUF, *TOTAL;
 double promedioB=0, promedioU=0, promedioL=0;
-pthread_barrier_t barrera,barrera1, barrera2, barrera3, barrera4, barrera5;
+pthread_barrier_t barrera,barrera1, barrera2;
 pthread_mutex_t miMutex;
 
 double dwalltime(){
@@ -20,6 +19,7 @@ double dwalltime(){
 }
 
 void* multiplicacion(void *id){
+    int i,j,k;
     int idLocal = *(int*)id;
     int posInicial = idLocal*elementosThread;
     int posFinal = (idLocal+1)*elementosThread;
@@ -39,17 +39,6 @@ void* multiplicacion(void *id){
             promedioU+=auxU;
         pthread_mutex_unlock(&miMutex);
     
-    pthread_barrier_wait(&barrera); 
-
-    if(idLocal==0){
-        printf("antes de dividir por N %f %f %f %i \n", promedioB,promedioL,promedioU,idLocal);
-        promedioB = promedioB / Total;
-        promedioL = promedioL / Total;
-        promedioU = promedioU / Total;
-        promedioL = promedioL * promedioU; //En promedio L queda el promedio de L por el de U.
-        printf("Despues de dividir por N %f %f %f \n", promedioB,promedioL,promedioU);
-    }
-
     //Genera matriz transpuesta
 	for(i=posInicial;i<posFinal;i++){
 	  for(j=0;j<N;j++){
@@ -58,24 +47,22 @@ void* multiplicacion(void *id){
 			At[j*N+i]= temp;
 	  }
 	}
-    pthread_barrier_wait(&barrera1); 
-   
+    
+    pthread_barrier_wait(&barrera); 
+
+    if(idLocal==0){   //el hilo 0 calcula los promedios
+        promedioB = promedioB / Total;
+        promedioL = promedioL / Total;
+        promedioU = promedioU / Total;
+        promedioL = promedioL * promedioU; //En promedio L queda el promedio de L por el de U.
+    }
+
     for(int i=posInicial;i<posFinal;i++){
  	    for(int j=0;j<N;j++){
             AA[i*N+j]=0;
             for(int k=0;k<N;k++){
                AA[i*N+j]= AA[i*N+j] + A[i*N+k]*At[k+j*N]; //AA=A*At
             }
-        }
-    }
-
-    pthread_barrier_wait(&barrera2);
-    for(int i=posInicial;i<posFinal;i++){
- 	    for(int j=0;j<N;j++){
-           AAC[i*N+j]=0;
-           for(int k=0;k<N;k++){
-		        AAC[i*N+j]= AAC[i*N+j] + AA[i*N+k]*C[k+j*N]*promedioL;//AAC=(AA*C)*promedio de L y U
-	        }
         }
     }
 
@@ -88,7 +75,27 @@ void* multiplicacion(void *id){
         }
     }
 
-    pthread_barrier_wait(&barrera3);
+    for(int i=posInicial;i<posFinal;i++){
+ 	    for(int j=0;j<N;j++){
+            LBE[i*N+j]=0;
+            for(int k=j;k<N;k++){
+		        DU[i*N+j]= DU[i*N+j] + D[i*N+k]*U[k+j*N];//DU= D*U		
+	        }
+        }    
+     }
+
+
+    pthread_barrier_wait(&barrera1); 
+
+
+    for(int i=posInicial;i<posFinal;i++){
+ 	    for(int j=0;j<N;j++){
+           AAC[i*N+j]=0;
+           for(int k=0;k<N;k++){
+		        AAC[i*N+j]= AAC[i*N+j] + AA[i*N+k]*C[k+j*N]*promedioL;//AAC=(AA*C)*promedio de L y U
+	        }
+        }
+    }
 
     for(int i=posInicial;i<posFinal;i++){
  	    for(int j=0;j<N;j++){
@@ -101,24 +108,14 @@ void* multiplicacion(void *id){
 
     for(int i=posInicial;i<posFinal;i++){
  	    for(int j=0;j<N;j++){
-            LBE[i*N+j]=0;
-            for(int k=j;k<N;k++){
-		        DU[i*N+j]= DU[i*N+j] + D[i*N+k]*U[k+j*N];//DU= D*U		
-	        }
-        }    
-     }
-    pthread_barrier_wait(&barrera4);
-
-    for(int i=posInicial;i<posFinal;i++){
- 	    for(int j=0;j<N;j++){
             DUF[i*N+j]=0;
-            for(int k=j;k<N;k++){
+            for(int k=0;k<N;k++){
 		        DUF[i*N+j]= DUF[i*N+j] + DU[i*N+k]*F[k+j*N]*promedioB;	//DUF= (DU*F)*promedio B	
 	        }
         }     
     }
 
-    pthread_barrier_wait(&barrera5);
+    pthread_barrier_wait(&barrera2);
     for(i=posInicial;i<posFinal;i++){
         for(j=0;j<N;j++)
             TOTAL[i*N+j]= AAC[i*N+j] + LBE[i*N+j] + DUF[i*N+j]; //TOTAL= AAC + LBE + DUF
@@ -132,7 +129,7 @@ int main(int argc,char*argv[]){
         printf("Faltan argumentos \n");
         return 0;
     }
-    int check=1;
+    int check=1,i,j,k;
     double timetick;
     N = atol(argv[1]);
     int numthread=atol(argv[2]);;
@@ -145,9 +142,6 @@ int main(int argc,char*argv[]){
     pthread_barrier_init(&barrera, NULL, numthread);
     pthread_barrier_init(&barrera1, NULL, numthread);
     pthread_barrier_init(&barrera2, NULL, numthread);
-    pthread_barrier_init(&barrera3, NULL, numthread);
-    pthread_barrier_init(&barrera4, NULL, numthread);
-    pthread_barrier_init(&barrera5, NULL, numthread);
 
     A=(double*)malloc(sizeof(double)*N*N);
     At=(double*)malloc(sizeof(double)*N*N);
@@ -222,9 +216,6 @@ int main(int argc,char*argv[]){
     pthread_barrier_destroy(&barrera);
     pthread_barrier_destroy(&barrera1);
     pthread_barrier_destroy(&barrera2);
-    pthread_barrier_destroy(&barrera3);
-    pthread_barrier_destroy(&barrera4);
-    pthread_barrier_destroy(&barrera5);
 
     free(A);
     free(B);

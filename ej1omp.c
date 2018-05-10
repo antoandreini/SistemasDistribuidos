@@ -1,5 +1,5 @@
-//Ejercicio 1 Open MP
-#include<omp.h>
+//Ejercicio 1 openmp
+#include <omp.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include <sys/time.h>
@@ -26,12 +26,12 @@ int main(int argc,char*argv[]){
   //variables  
    double *A, *At,*R;
    double temp; 
-   int i,j,k,N, numThreads;
+   int i,j,k,N;
    int check=1;
    double timetick;
+   int numthread=atoi(argv[2]);
    N=atoi(argv[1]);
-   numThreads=atoi(argv[2]);
-   omp_set_num_threads(numThreads);
+    omp_set_num_threads(numthread);
  
    //Aloca memoria para las matrices
    A=(double*)malloc(sizeof(double)*N*N);
@@ -41,16 +41,17 @@ int main(int argc,char*argv[]){
    //Inicializa las matriZ A en 1, el resultado sera una matriz R con todos sus valores en N
    for(i=0;i<N;i++){
    	for(j=0;j<N;j++){
-	       	A[i*N+j]=1;
-		At[i*N+j]=1;
+	    A[i*N+j]=1;
+		At[i*N+j]=A[i*N+j];
    	}
    }
 
     
-timetick = dwalltime();   
-   //Genera matriz traspuesta
+    timetick = dwalltime(); 
+	 
+   //Genera matriz transpuesta
 	  for(i=0;i<N;i++){
-	   for(j=i+1;j<N;j++){
+	   for(j=0;j<N;j++){
 			temp = At[i*N+j];
 			At[i*N+j]= At[j*N+i];
 			At[j*N+i]= temp;
@@ -58,7 +59,7 @@ timetick = dwalltime();
 	  }   
 
    //Realiza la multiplicacion
-   #pragma omp parallel for
+    #pragma omp for private(k) 
    for(i=0;i<N;i++){
    	for(j=0;j<N;j++){
         R[i*N+j]=0;
@@ -66,7 +67,8 @@ timetick = dwalltime();
            	R[i*N+j]= R[i*N+j] + A[i*N+k]*At[k+j*N];
         	}
     	}
-   }  
+   }
+
    printf("Tiempo en segundos %f \n", dwalltime() - timetick);
 
    //Verifica el resultado
