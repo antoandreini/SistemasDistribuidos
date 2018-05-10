@@ -7,8 +7,8 @@ int i,j,k;
 int elementosThread;
 unsigned long Total,N;
 double *A, *At, *B, *C, *D, *E, *F, *L, *U, *AA, *AAC, *LB, *LBE, *DU, *DUF, *TOTAL;
-double promedioB, promedioU, promedioL;
-pthread_barrier_t barrera, barrera2, barrera3, barrera4, barrera5;
+double promedioB=0, promedioU=0, promedioL=0;
+pthread_barrier_t barrera,barrera1, barrera2, barrera3, barrera4, barrera5;
 pthread_mutex_t miMutex;
 
 double dwalltime(){
@@ -23,34 +23,42 @@ void* multiplicacion(void *id){
     int idLocal = *(int*)id;
     int posInicial = idLocal*elementosThread;
     int posFinal = (idLocal+1)*elementosThread;
-    double temp;
+    double temp, auxB=0,auxL=0,auxU=0;;
 
  
     for(i=posInicial;i<posFinal;i++){   //Calcula los promedios
         for(j=0;j<N;j++){
-            pthread_mutex_lock(&miMutex);
-                promedioB+= B[i*N+j];
-                promedioL+= L[i*N+j];
-                promedioU+= U[i*N+j];
-            pthread_mutex_unlock(&miMutex);
+                auxB+= B[i*N+j];
+                auxL+= L[i*N+j];
+                auxU+= U[i*N+j];
         }
     }
+        pthread_mutex_lock(&miMutex);
+            promedioB+=auxB;
+            promedioL+=auxL;
+            promedioU+=auxU;
+        pthread_mutex_unlock(&miMutex);
+    
+    pthread_barrier_wait(&barrera); 
+
     if(idLocal==0){
+        printf("antes de dividir por N %f %f %f %i \n", promedioB,promedioL,promedioU,idLocal);
         promedioB = promedioB / Total;
         promedioL = promedioL / Total;
         promedioU = promedioU / Total;
-        promedioL = promedioL * promedioU; //En promedioL queda el promedio de L por el de U.
+        promedioL = promedioL * promedioU; //En promedio L queda el promedio de L por el de U.
+        printf("Despues de dividir por N %f %f %f \n", promedioB,promedioL,promedioU);
     }
 
     //Genera matriz transpuesta
 	for(i=posInicial;i<posFinal;i++){
-	  for(j=i+1;j<N;j++){
+	  for(j=0;j<N;j++){
 	    	temp = At[i*N+j];
 			At[i*N+j]= At[j*N+i];
 			At[j*N+i]= temp;
 	  }
 	}
-    pthread_barrier_wait(&barrera); 
+    pthread_barrier_wait(&barrera1); 
    
     for(int i=posInicial;i<posFinal;i++){
  	    for(int j=0;j<N;j++){
@@ -135,6 +143,7 @@ int main(int argc,char*argv[]){
     pthread_mutex_init(&miMutex, NULL);
     
     pthread_barrier_init(&barrera, NULL, numthread);
+    pthread_barrier_init(&barrera1, NULL, numthread);
     pthread_barrier_init(&barrera2, NULL, numthread);
     pthread_barrier_init(&barrera3, NULL, numthread);
     pthread_barrier_init(&barrera4, NULL, numthread);
@@ -177,11 +186,7 @@ int main(int argc,char*argv[]){
                L[i*N+j]= 1.0;
            }
        }
-    }
-    promedioB = 0;
-    promedioL = 0;
-    promedioU = 0;
-    
+    }   
 
     timetick = dwalltime();
     elementosThread = N/numthread;
@@ -194,9 +199,9 @@ int main(int argc,char*argv[]){
     for (int id=0;id<numthread; id++){
         pthread_join(T[id],NULL);
     }
-    
 
     printf("Tiempo en segundos %f \n", dwalltime() - timetick);
+    
    
     //chequea resultado
     double resultado = TOTAL[0];
@@ -215,6 +220,7 @@ int main(int argc,char*argv[]){
     pthread_mutex_destroy(&miMutex);    
 
     pthread_barrier_destroy(&barrera);
+    pthread_barrier_destroy(&barrera1);
     pthread_barrier_destroy(&barrera2);
     pthread_barrier_destroy(&barrera3);
     pthread_barrier_destroy(&barrera4);
