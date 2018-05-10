@@ -38,16 +38,17 @@ int main(int argc,char*argv[]){
    //Inicializa las matriZ A en 1, el resultado sera una matriz R con todos sus valores en N
    for(i=0;i<N;i++){
    	for(j=0;j<N;j++){
-	       	A[i*N+j]=1;
-		At[i*N+j]=1;
+	    A[i*N+j]=1;
+		At[i*N+j]=A[i*N+j];
    	}
    }
 
     
-timetick = dwalltime();   
+    timetick = dwalltime(); 
+	 
    //Genera matriz transpuesta
 	  for(i=0;i<N;i++){
-	   for(j=i+1;j<N;j++){
+	   for(j=0;j<N;j++){
 			temp = At[i*N+j];
 			At[i*N+j]= At[j*N+i];
 			At[j*N+i]= temp;
@@ -60,7 +61,7 @@ timetick = dwalltime();
    	for(j=0;j<N;j++){
         R[i*N+j]=0;
        	for(k=0;k<N;k++){
-           	R[i*N+j]= R[i*N+j] + A[i*N+k]*A[k+j*N];
+           	R[i*N+j]= R[i*N+j] + A[i*N+k]*At[k+j*N];
         	}
     	}
    }  

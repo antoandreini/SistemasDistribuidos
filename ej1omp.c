@@ -58,12 +58,12 @@ timetick = dwalltime();
 	  }   
 
    //Realiza la multiplicacion
-   #pragma omp paralallel for
+   #pragma omp parallel for
    for(i=0;i<N;i++){
    	for(j=0;j<N;j++){
         R[i*N+j]=0;
        	for(k=0;k<N;k++){
-           	R[i*N+j]= R[i*N+j] + A[i*N+k]*A[k+j*N];
+           	R[i*N+j]= R[i*N+j] + A[i*N+k]*At[k+j*N];
         	}
     	}
    }  

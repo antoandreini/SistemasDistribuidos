@@ -51,7 +51,7 @@ int main(int argc,char*argv[]){
    	for(j=0;j<N;j++){
         	R[i*N+j]=0;
        	for(k=0;k<N;k++){
-           	R[i*N+j]= R[i*N+j] + At[k*N+i]*A[k*N+j];
+           	R[i*N+j]= R[i*N+j] + A[k*N+i]*A[k*N+j];
         	}
     	}
    }  
