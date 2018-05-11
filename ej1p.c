@@ -37,7 +37,7 @@ void* multiplicacion(void *id){
   pthread_barrier_wait(&barrera);
 
   for(int i=posInicial;i<posFinal;i++){
- 	  for(int j=0;j<N;j++){
+ 	for(int j=0;j<N;j++){
         R[i*N+j]=0;
         for(int k=0;k<N;k++){
             R[i*N+j]+=A[i*N+k]*At[k+j*N];

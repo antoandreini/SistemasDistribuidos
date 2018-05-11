@@ -59,7 +59,7 @@ int main(int argc,char*argv[]){
 	  }   
 
    //Realiza la multiplicacion
-    #pragma omp for private(k) 
+    #pragma omp parallel for collapse(2) private(k)
    for(i=0;i<N;i++){
    	for(j=0;j<N;j++){
         R[i*N+j]=0;
